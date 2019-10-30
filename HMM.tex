@@ -1,0 +1,55 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{left=2.0cm, right=2.0cm, top=1.0cm, bottom=2.0cm}
+\usepackage{gensymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\setlength{\parindent}{0pt}
+\usepackage{color}
+\usepackage{biblatex}
+\addbibresource{hmm.bib}
+
+\title{HMM in ReacNetGenerator}
+
+\begin{document}
+\maketitle
+
+We \cite{wlpjctc2016} Addressed this problem using a two-state hidden Markov model, in which our observed time series $E_t$ is modeled as a probabilistic function of a two-state Markov Chain $X$. The Markov chain is a stochastic binary sequence of states $X_t$ characterized by the \emph{transition probability} \textbf{T} = $P(E_t|X_t-1)$ describing the frequency of transitions in the sequence. Although the states $X_t$ are not directly observable, they generate the observed values of $E_t$ according to the \emph{output probability} $\mathbf{O} = P(E_t|X_t)$ describing how often a given value of $X_t$ produces a particular observation of $E_t$.
+The HMM is thus parametrized by the transition probability, the output probability, and the initial probability $P(X_0)$. The end goal is to calculate the most likely sequence of states ${V_0, V_1, ..., V_t}$ through the Markov chain, which contains a reduced amount of noise due to the parametrization of the HMM. \\
+
+We set the initial probabilities to a uniform distribution (i.e., $P(X_0 = 0) = P(x_0 = 1) = 0.5$) and parametrized the transition probability as 
+
+$$
+\begin{Bmatrix}
+   0.999 & 0.001 \\ 
+   0.001 & 0.009
+\end{Bmatrix} 
+$$
+
+which indicates that $X_t$ has a 0.001 probability of making a 0 $\rightarrow$ 1 or 1 $\rightarrow$ transition in any frame. Choosing smaller values in the off-diagonal of \textbf{T} increases the strength of the noise filter and forces $X_t$ to have fewer transitions. \textcolor{magenta}{Here, the parameter is chosen so that the frequency of transitions is roughly consistent with the piston interval of 4000 frames in the nanoreactor simulation.} \\
+
+We similarly parametrized the output probability as 
+
+$$
+\begin{Bmatrix}
+    0.6 & 0.4 \\
+    0.4 & 0.6
+\end{Bmatrix}  
+$$
+
+which signifies that $E_t$ has a 0.6 probability of being equal to $X_t$ and any given time. Choosing larger values in the off-diagonal of \textbf{O} allows the Markov process to deviate more often from the observed signal and behave according to its intrinsic transition probability. The HMM provides the joint probability distribution over the observed and hidden variables as
+
+$$
+P(X_{0:t} , E_{1:t}) = P(X_0) \prod_{i=1}^t P(X_i|X_i - 1)P(E_i|X_i)
+$$
+
+where $E_{1:t}={E_1, ..., E_t}$ represents the inclusive sequence of observed values of $E$ from the initial value to any time \emph{t}. We apply the Viterbi algorithm to compute the most likely sequence of states over the Markov chain, namely:
+
+$$
+V_{0:T} = \underset{\text{$X_0, X_1, ..., X_T$}}{max} P(X_{0:T}|E_{1:T})
+$$
+where T is the length of the whole MD trajectory.
+
+\printbibliography
+\end{document}
